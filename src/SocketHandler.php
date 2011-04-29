@@ -40,4 +40,3 @@ final class SocketHandler extends Singleton
 	{
 	}
 }
-class Test { }

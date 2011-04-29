@@ -36,20 +36,39 @@ final class Configurator extends Singleton
 
 	public function parse()
 	{
-		$this->fd = fopen($this->configfile, 'r');
+		$config = file_get_contents($this->configfile);
+		$this->parse_section($config);
 
-		rewind($this->fd);
-		while (!feof($this->fd))
-		{
-			$char = fgetc($this->fd);
-			echo $char;
-			switch ($char)
-			{
-				
-			}
-		}		
+		// some variables, such as loglevel, may require special processing
+		if (!is_int($this->config['loglevel']))
+			$this->config['loglevel'] = eval("return ".$this->config['loglevel'].";");
+	}
+
+	private function parse_section($data, &$parent=NULL)
+	{
+		if ($parent == NULL) $parent = &$this->config;
+
+		// first pull out all the sections
+		$pattern = '/\<(([^>:]+):([^>]+))\>(.*?)(\<\/\\2\>)/s';
+		preg_match_all($pattern, $data, $subs, PREG_SET_ORDER);
 		
-		fclose($this->fd);
+		// then if there are subsections, parse them and remove them from $data
+		if (is_array($subs))
+			foreach ($subs AS $sub)
+				if (!empty($sub[0]))
+				{
+					$parent[trim($sub[1])] = array();
+					$data = str_replace($sub[0], "", $data);
+					$this->parse_section($sub[4], $parent[trim($sub[1])]);
+				}
+
+		$pattern = '/([^=]+)=([^;]+);/';
+		preg_match_all($pattern, $data, $vars);
+
+		foreach ($vars[1] AS $key => $var)
+		{
+			$parent[trim($var)] = trim($vars[2][$key]);
+		}
 	}
 
 	public function rehash()
