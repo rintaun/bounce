@@ -7,7 +7,7 @@
  * Copyright 2011 Matthew J. Lanigan.                       *
  * See LICENSE file for licensing details.                  *
  ************************************************************
- * src/inc/Configurator.php                                 *
+ * src/Configurator.php                                     *
  *                                                          *
  * Description: Configuration parser                        *
  ************************************************************/
@@ -22,15 +22,15 @@ final class Configurator extends Singleton
 		'loglevel' => L_ALL,
 	);
 
-        protected function __construct()
-        {
+	protected function __construct()
+	{
 		if (isset($GLOBALS['confoverride'])) $this->configfile = $GLOBALS['confoverride'];
 		else $this->configfile = 'etc/bounce.conf';
 
 		$this->parse();
-        }
+	}
 
-	protected function parse()
+	public function parse()
 	{
 		
 	}

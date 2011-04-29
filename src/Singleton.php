@@ -7,7 +7,7 @@
  * Copyright 2011 Matthew J. Lanigan.                       *
  * See LICENSE file for licensing details.                  *
  ************************************************************
- * src/inc/Singleton.php                                    *
+ * src/Singleton.php                                        *
  *                                                          *
  * Description: Singletons are awesome. :D                  *
  ************************************************************/

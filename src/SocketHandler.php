@@ -7,47 +7,36 @@
  * Copyright 2011 Matthew J. Lanigan.                       *
  * See LICENSE file for licensing details.                  *
  ************************************************************
- * src/Bounce.php                                           *
+ * src/SocketHandler.php                                    *
  *                                                          *
- * Description: Bounce core                                 *
+ * Description: Socket handling subsystem                   *
  ************************************************************/
 
-ini_set('memory_limit', '512M');
-
-require_once("Singleton.php");
-require_once("Configurator.php");
-require_once("Logger.php");
-require_once("SocketHandler.php");
-
-final class Bounce extends Singleton
+final class SocketHandler extends Singleton
 {
+	private $sockets = array();
+	private $q = array();
+	private $interrupt = FALSE;
 
 	protected function __construct()
 	{
-		$config = Configurator::getInstance();
-		$config->parse();
 	}
 
-	public function start()
+	public function loop()
 	{
-		$SH = SocketHandler::getInstance();
-		$SH->loop();
+		$x = 0;
+		while (!$this->interrupt)
+		{
+		}		
 	}
 
-	public function end()
+	public function interrupt()
 	{
-		$SH = SocketHandler::getInstance();
-		$SH->interrupt();
+		$this->interrupt = TRUE;
 	}
 
 	protected function _destroy()
 	{
 	}
 }
-
-function _exit()
-{
-	_log(L_INFO, "Shutting down...");
-	$bounce = Bounce::getInstance();
-	$bounce->end();
-}
+class Test { }

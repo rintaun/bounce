@@ -7,7 +7,7 @@
  * Copyright 2011 Matthew J. Lanigan.                       *
  * See LICENSE file for licensing details.                  *
  ************************************************************
- * src/inc/Logger.php                                       *
+ * src/Logger.php                                           *
  *                                                          *
  * Description: Log manager                                 *
  ************************************************************/
@@ -80,15 +80,11 @@ final class Logger extends Singleton
 			if (is_resource($this->fd))
 				fwrite($this->fd, $logentry);
 		}
-		if ($level & L_FATAL)
-		{
-			_exit();
-		}
 	}
 
         protected function _destroy()
         {
-		fwrite($this->fd,"");
+		fwrite($this->fd,"\n");
 		fclose($this->fd);
         }
 }
@@ -102,4 +98,14 @@ function _log($level, $format)
 	array_shift($args);
 
 	$logger->log($level, $format, $args);
+}
+
+function _die($format)
+{
+	$logger = Logger::getInstance();
+	$args = func_get_args();
+	array_shift($args);
+
+	$logger->log(L_FATAL, "Fatal Error! ".$format, $args);
+	_exit();
 }

@@ -12,6 +12,8 @@
  * Description: Bounce program wrapper                      *
  ************************************************************/
 
+declare(ticks=1);
+
 require_once('src/Bounce.php');
 
 $GLOBALS['version'] = "0.1-alpha";
@@ -19,6 +21,35 @@ $GLOBALS['fork'] = false;
 $GLOBALS['forked'] = false;
 
 _log(L_INFO, 'Bounce v%s starting...', $GLOBALS['version']);
+
+function signal_handler ($signo)
+{
+	switch ($signo)
+	{
+		case SIGINT:
+			_log(L_INFO, "Received SIGINT. Stopping...");
+			$SH = SocketHandler::getInstance();
+			$SH->interrupt();
+			break;
+		case SIGTERM:
+			_log(L_INFO, "Received SIGTERM. Stopping...");
+			$SH = SocketHandler::getInstance();
+			$SH->interrupt();
+			break;
+		case SIGHUP:
+			_log(L_INFO, "Received SIGHUP. Rehashing.");
+			$config = Configurator::getInstance();
+			$config->rehash();
+			break;
+		default:
+	}
+}
+
+pcntl_signal(SIGINT, 'signal_handler');
+pcntl_signal(SIGTERM, 'signal_handler');
+pcntl_signal(SIGHUP, 'signal_handler');
+
+register_shutdown_function('_exit');
 
 $ARGS = getopt('dc:l:f');
 if (is_array($ARGS))
