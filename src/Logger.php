@@ -12,6 +12,8 @@
  * Description: Log manager                                 *
  ************************************************************/
 
+if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
+
 require_once("Singleton.php");
 
 define('L_DEBUG',   0x01);

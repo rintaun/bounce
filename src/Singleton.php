@@ -12,6 +12,8 @@
  * Description: Singletons are awesome. :D                  *
  ************************************************************/
 
+if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
+
 abstract class Singleton
 {
 	protected static $_instances;

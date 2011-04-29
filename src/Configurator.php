@@ -12,15 +12,19 @@
  * Description: Configuration parser                        *
  ************************************************************/
 
+if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
+
 require_once("Singleton.php");
 
 final class Configurator extends Singleton
 {
-	private $configfile = NULL;
+	private $configfile = "";
 	private $config = array( // define defaults
 		'logfile' => 'bounce.log',
 		'loglevel' => L_ALL,
 	);
+
+	private $fd = NULL;
 
 	protected function __construct()
 	{
@@ -32,10 +36,27 @@ final class Configurator extends Singleton
 
 	public function parse()
 	{
+		$this->fd = fopen($this->configfile, 'r');
+
+		rewind($this->fd);
+		while (!feof($this->fd))
+		{
+			$char = fgetc($this->fd);
+			echo $char;
+			switch ($char)
+			{
+				
+			}
+		}		
 		
+		fclose($this->fd);
 	}
 
 	public function rehash()
+	{
+	}
+
+	private function save()
 	{
 	}
 
@@ -47,5 +68,6 @@ final class Configurator extends Singleton
 
 	protected function _destroy()
 	{
+		$this->save();
 	}	
 }

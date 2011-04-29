@@ -14,6 +14,8 @@
 
 ini_set('memory_limit', '512M');
 
+if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
+
 require_once("Singleton.php");
 require_once("Configurator.php");
 require_once("Logger.php");
@@ -24,8 +26,7 @@ final class Bounce extends Singleton
 
 	protected function __construct()
 	{
-		$config = Configurator::getInstance();
-		$config->parse();
+		Configurator::getInstance();
 	}
 
 	public function start()

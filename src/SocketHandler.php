@@ -12,6 +12,8 @@
  * Description: Socket handling subsystem                   *
  ************************************************************/
 
+if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
+
 final class SocketHandler extends Singleton
 {
 	private $sockets = array();
@@ -24,7 +26,6 @@ final class SocketHandler extends Singleton
 
 	public function loop()
 	{
-		$x = 0;
 		while (!$this->interrupt)
 		{
 		}		

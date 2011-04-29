@@ -9,10 +9,12 @@
  ************************************************************
  * bounce.php                                               *
  *                                                          *
- * Description: Bounce program wrapper                      *
+ * Description: Bounce CLI wrapper                          *
  ************************************************************/
 
 declare(ticks=1);
+
+define('_BOUNCE_', true);
 
 require_once('src/Bounce.php');
 
