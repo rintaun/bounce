@@ -8,7 +8,6 @@
  * See LICENSE file for licensing details.                  *
  ************************************************************
  * bounce.php                                               *
- * Last Modified: 4/28/2011                                 *
  *                                                          *
  * Description: Bounce program wrapper                      *
  ************************************************************/

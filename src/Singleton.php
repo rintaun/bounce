@@ -8,7 +8,6 @@
  * See LICENSE file for licensing details.                  *
  ************************************************************
  * src/inc/Singleton.php                                    *
- * Last Modified: 4/28/2011                                 *
  *                                                          *
  * Description: Singletons are awesome. :D                  *
  ************************************************************/

@@ -8,7 +8,6 @@
  * See LICENSE file for licensing details.                  *
  ************************************************************
  * src/inc/Configurator.php                                 *
- * Last Modified: 4/28/2011                                 *
  *                                                          *
  * Description: Configuration parser                        *
  ************************************************************/
