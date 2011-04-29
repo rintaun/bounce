@@ -41,6 +41,8 @@ final class Logger extends Singleton
 		{
  			$this->logfile = $config->logfile;
 		}
+
+		$this->logfile = "log/".basename($this->logfile);
 		
 		$this->fd = fopen($this->logfile, 'a+');
         }
