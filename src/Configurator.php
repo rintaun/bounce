@@ -7,24 +7,46 @@
  * Copyright 2011 Matthew J. Lanigan.                       *
  * See LICENSE file for licensing details.                  *
  ************************************************************
- * src/inc/Logger.php                                       *
+ * src/inc/Configurator.php                                 *
  * Last Modified: 4/28/2011                                 *
  *                                                          *
- * Description: Log manager                                 *
+ * Description: Configuration parser                        *
  ************************************************************/
 
 require_once("Singleton.php");
 
-class Logger extends Singleton
+final class Configurator extends Singleton
 {
+	private $configfile = NULL;
+	private $config = array( // define defaults
+		'logfile' => 'bounce.log',
+		'loglevel' => L_ALL,
+	);
 
         protected function __construct()
         {
+		if (isset($GLOBALS['confoverride'])) $this->configfile = $GLOBALS['confoverride'];
+		else $this->configfile = 'etc/bounce.conf';
+
+		$this->parse();
         }
 
+	protected function parse()
+	{
+		
+	}
 
-        protected function __destruct()
-        {
-        }
+	public function rehash()
+	{
+	}
+
+	public function __get($name)
+	{
+		if (isset($this->config[$name]))
+			return $this->config[$name];
+	}
+
+	protected function _destroy()
+	{
+	}	
 }
-

@@ -13,34 +13,30 @@
  * Description: Singletons are awesome. :D                  *
  ************************************************************/
 
-class Singleton
+abstract class Singleton
 {
-	private static $_instance;
+	protected static $_instances;
 
-	protected function __construct() {}
-	
-	public static function singleton()
+	abstract protected function __construct();
+	abstract protected function _destroy();
+
+	final public static function getInstance()
 	{
-		$i = get_called_class();
-		if (!isset(self::$_instance[$i]))
+		$c = get_called_class();
+		if (!isset(self::$_instances[$c]))
 		{
-			self::$_instance[$i] = new $i;
+			self::$_instances[$c] = new $c;
 		}
-		return self::$_instance[$i];
+		return self::$_instances[$c];
 	}
 
-	public function __clone()
+	final public function __destruct()
 	{
-		trigger_error('You may not clone a singleton object.', E_USER_ERROR);
+		$c = get_called_class();
+		$this->_destroy();
+		if (isset(self::$_instances[$c]))
+			unset(self::$_instances[$c]);
 	}
 
-	public function destroy()
-	{
-		unset(self::$_instance[get_class($this)]);
-	}
-
-	public function __destruct()
-	{
-		unset(self::$instance);
-	}
+	final protected function __clone() { }
 }

@@ -7,23 +7,31 @@
  * Copyright 2011 Matthew J. Lanigan.                       *
  * See LICENSE file for licensing details.                  *
  ************************************************************
- * src/inc/Configurator.php                                 *
+ * src/core.php                                             *
  * Last Modified: 4/28/2011                                 *
  *                                                          *
- * Description: Configuration parser                        *
+ * Description: Bounce core                                 *
  ************************************************************/
 
-require_once("Singleton.php");
+ini_set('memory_limit', '512M');
 
-class Configurator extends Singleton
+require_once("Singleton.php");
+require_once("Configurator.php");
+require_once("Logger.php");
+
+final class Bounce extends Singleton
 {
 
-        protected function __construct()
-        {
-        }
+	protected function __construct()
+	{
+	}
+
+	public function start()
+	{
+	}
 
 
-        protected function __destruct()
-        {
-        }
+	protected function _destroy()
+	{
+	}
 }
