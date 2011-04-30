@@ -32,6 +32,8 @@ final class Bounce extends Singleton
 	public function start()
 	{
 		$SH = SocketHandler::getInstance();
+		$sid = $SH->createSocket('irc.malkier.net', 6667, '');
+		$SH->send($sid, "NICK blahblahblah\n");
 		$SH->loop();
 	}
 
