@@ -7,50 +7,44 @@
  * Copyright 2011 Matthew J. Lanigan.                       *
  * See LICENSE file for licensing details.                  *
  ************************************************************
- * src/Bounce.php                                           *
+ * src/BounceServer.php                                     *
  *                                                          *
- * Description: Bounce core                                 *
+ * Description: Server that handles Bounce clients          *
  ************************************************************/
-
-ini_set('memory_limit', '512M');
 
 if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
 
-require_once("Singleton.php");
-require_once("Configurator.php");
-require_once("Logger.php");
-require_once("SocketHandler.php");
-require_once("BounceServer.php");
-
-final class Bounce extends Singleton
+final class BounceServer extends Singleton
 {
+	private $clients = array();
 
 	protected function __construct()
 	{
-		Configurator::getInstance();
+		$SH = SocketHandler::getInstance();
+		$config = Configurator::getInstance();
+
+		$bind = explode(":", $config->bind);		
+
+		$listener = $SH->createListener($bind[0], $bind[1], array($this, 'addClient'));
 	}
 
-	public function start()
+	public function addClient($sid)
 	{
-		$SH = SocketHandler::getInstance();
-		$BS = BounceServer::getInstance();
-		$SH->loop();
+		$this->clients[] = $sid;
+		return array($this, 'readData');
 	}
 
-	public function end()
+	public function readData($sid, $data)
 	{
-		$SH = SocketHandler::getInstance();
-		$SH->interrupt();
+		$d = explode("\n", $data);
+		$line = array_shift($d);
+		$data = implode("\n", $d);
+
+		echo $line."\n";
+		return $data;
 	}
 
 	protected function _destroy()
 	{
 	}
-}
-
-function _exit()
-{
-	_log(L_INFO, "Shutting down...");
-	$bounce = Bounce::getInstance();
-	$bounce->end();
 }

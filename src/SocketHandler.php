@@ -21,7 +21,6 @@ define('SH_LISTENER', 2);
 final class SocketHandler extends Singleton
 {
 	private $sockets = array();
-	private $listeners = array();
 	private $interrupt = FALSE;
 
 	private $sendq = array();
@@ -39,7 +38,6 @@ final class SocketHandler extends Singleton
 			
 			// First, build the read array from ALL available sockets.
 			$read = array();
-			foreach ($this->listeners AS $sid => $entry) $read[$sid] = $entry['socket'];
 			foreach ($this->sockets AS $sid => $entry) $read[$sid] = $entry['socket'];
 
 			// Then build the write array from all the sockets in sendq.
@@ -49,13 +47,15 @@ final class SocketHandler extends Singleton
 			// select doesn't actually check for exceptions, so we'll make our own later
 			$except = NULL;
 
+			if (empty($read) && empty($write)) continue;
+
 			if (socket_select($read, $write, $except, 1) < 1) continue;
 
 			// Then do them in reverse of the order we built them in!
 
 			if (!empty($write))
 			{
-				foreach ($write AS $socket) $sids[] = getSID($socket);
+				foreach ($write AS $socket) $sids[] = $this->getSID($socket);
 				foreach ($this->sendq AS $entry)
 				{
 					if (in_array($entry['sid'], $sids))
@@ -72,18 +72,30 @@ final class SocketHandler extends Singleton
 
 			if (!empty($read))
 			{
-				foreach ($read AS $socket) $sids[] = getSID($socket);
+				foreach ($read AS $socket) $sids[] = $this->getSID($socket);
 				foreach ($sids AS $sid)
 				{
 					// if it's a listener, then we have a connection.
 					if ($this->getType($sid) == SH_LISTENER)
 					{
+						if (($client = @socket_accept($this->sockets[$sid]['socket'])) === FALSE) continue;
+						$csid = uniqid('s');
+						$address = "";
+						$port = 0;
+						socket_getpeername($client, $address, $port);
+
+						$this->sockets[$csid] = array(
+							'socket' => $client,
+							'address' => $address,
+							'port' => $port,
+							'callback' => call_user_func($this->sockets[$sid]['callback'], $csid)
+						);
 					}
 					else
 					{
 						$data = socket_read($this->sockets[$sid]['socket'], 65536);
 						while (strlen($data) > 0)
-							call_user_func($this->sockets[$sid]['callback'], $data);
+							$data = call_user_func($this->sockets[$sid]['callback'], $sid, $data);
 					}
 				}
 			}
@@ -92,9 +104,6 @@ final class SocketHandler extends Singleton
 
 	private function getSID($socket)
 	{
-		foreach ($this->listeners AS $sid => $data)
-			if ($data['socket'] == $socket) return $sid;
-
 		foreach ($this->sockets AS $sid => $data)
 			if ($data['socket'] == $socket) return $sid;
 	}
@@ -127,6 +136,8 @@ final class SocketHandler extends Singleton
 			_log(L_ERROR, "Could not connect to %s on port %d (socket %s).", $address, $port, $sid);
 			return FALSE;
 		}
+		socket_set_nonblock($socket);
+
 		$this->sockets[$sid] = array(
 			'socket' => $socket,
 			'address' => $address,
@@ -144,7 +155,7 @@ final class SocketHandler extends Singleton
 			_log(L_ERROR, "Unable to create listener %s (%s:%d).", $sid, $bind, $port);
 			return FALSE;
 		}
-		if (!socket_bind($socket, $address, $port))
+		if (!socket_bind($socket, $bind, $port))
 		{
 			_log(L_ERROR, "Could not bind listener %s to %s port %d.", $sid, $bind, $port);
 			return FALSE;
@@ -156,13 +167,19 @@ final class SocketHandler extends Singleton
 		}
 		socket_set_nonblock($socket);
 
-		$this->listeners[$sid] = array(
+		$this->sockets[$sid] = array(
 			'socket' => $socket,
 			'address' => $bind,
 			'port' => $port,
 			'callback' => $callback
 		);
 		return $sid;		
+	}
+
+	public function updateCallback($sid, $callback)
+	{
+		if (isset($this->sockets[$sid]))
+			$this->sockets[$sid]['callback'] = $callback;
 	}
 
 	public function send($sid, $data)
