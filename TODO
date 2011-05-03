@@ -1,1 +1,11 @@
-* Client CAP negotiation: multi-prefix, sasl, extended-join, account-notify, away-notify
+* CAP negotiation: multi-prefix, sasl, extended-join, account-notify, away-notify, uhnames
+- http://tools.ietf.org/html/draft-mitchell-irc-capabilities-01#page-10
+- * multi-prefix: multiple channel mode prefixes (e.g. @%+) shown if a user has more than one
+- * sasl: secure authentication layer
+  - http://hg.atheme.org/atheme/atheme/file/2cad1006efc3/doc/SASL
+- * extended-join: joins extended by services username
+  - http://hg.atheme.org/charybdis/charybdis/file/ffc7690ba9ab/doc/extended-join.txt
+- * account-notify: users sharing channel notified when a user authenticates to an account
+  - http://hg.atheme.org/charybdis/charybdis/file/ffc7690ba9ab/doc/account-notify.txt
+- * away-notify: users sharing channel notified when a user goes /AWAY
+- * uhnames: user-host listed in /NAMES

@@ -7,14 +7,18 @@
  * Copyright 2011 Matthew J. Lanigan.                       *
  * See LICENSE file for licensing details.                  *
  ************************************************************
- * src/BounceServer.php                                     *
+ * src/Server.php                                           *
  *                                                          *
  * Description: Server that handles Bounce clients          *
  ************************************************************/
 
 if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
 
-final class BounceServer extends Singleton
+require_once("Client.php");
+require_once("ClientParser.php");
+require_once("IRCParser.php");
+
+final class Server extends Singleton
 {
 	private $clients = array();
 
@@ -30,7 +34,7 @@ final class BounceServer extends Singleton
 
 	public function addClient($sid)
 	{
-		$this->clients[] = $sid;
+		$this->clients[$sid] = new Client($sid);
 		return array($this, 'readData');
 	}
 

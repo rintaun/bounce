@@ -15,8 +15,9 @@
 if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
 
 define('SH_UNKNOWN', 0);
-define('SH_SOCKET', 1);
-define('SH_LISTENER', 2);
+define('SH_SERVER', 1);
+define('SH_CLIENT', 2);
+define('SH_LISTENER', 3);
 
 final class SocketHandler extends Singleton
 {
@@ -79,7 +80,7 @@ final class SocketHandler extends Singleton
 					if ($this->getType($sid) == SH_LISTENER)
 					{
 						if (($client = @socket_accept($this->sockets[$sid]['socket'])) === FALSE) continue;
-						$csid = uniqid('s');
+						$csid = uniqid('c');
 						$address = "";
 						$port = 0;
 						socket_getpeername($client, $address, $port);
@@ -112,7 +113,8 @@ final class SocketHandler extends Singleton
 	{
 		switch (substr($sid,0,1))
 		{
-			case 's': return SH_SOCKET;
+			case 's': return SH_SERVER;
+			case 'c': return SH_CLIENT;
 			case 'l': return SH_LISTENER;
 			default: return SH_UNKNOWN;
 		}

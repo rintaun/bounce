@@ -20,7 +20,7 @@ require_once("Singleton.php");
 require_once("Configurator.php");
 require_once("Logger.php");
 require_once("SocketHandler.php");
-require_once("BounceServer.php");
+require_once("Server.php");
 
 final class Bounce extends Singleton
 {
@@ -33,7 +33,7 @@ final class Bounce extends Singleton
 	public function start()
 	{
 		$SH = SocketHandler::getInstance();
-		$BS = BounceServer::getInstance();
+		$BS = Server::getInstance();
 		$SH->loop();
 	}
 
