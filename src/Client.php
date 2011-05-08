@@ -19,7 +19,16 @@ class Client
 	private $sid = "";
 	private $myServer = NULL;
 
-	protected function __construct($sid)
+	private $inCAP = false;
+
+
+	private $nick = "";
+	private $user = "";
+	private $realname = "";
+
+	private $serverName = "asgard.projectxero.net";
+
+	public function __construct($sid)
 	{
 		$this->sid = $sid;
 	}
@@ -45,17 +54,14 @@ class Client
 		// now we need to find out if there's a method in $this for handling $command
 		// if there is, we pass off the rest of $data - the parameters - to it
 		// for processing
-		if (method_exists($this, "cmd_" . $command")) call_user_func(array($this, "cmd_" . $command), $data);
+		if (method_exists($this, "cmd_" . $command)) call_user_func(array($this, "cmd_" . $command), $data);
 
 		// if there ISN'T a method for handling $command...
 		// first we should check if they're registered. We intercept CAP entirely
 		// and NICK at least initially, so if the user isn't registered, yell at them
 		// like a small child that has just tried to pick up the cat by the ears.
 		else if (!$this->isRegistered())
-		{
-			$command = strtoupper($command);
-			$this->send("451 " . $command . " :Register first");
-		}
+			$this->sendNumeric(451, ":Register first");
 
 		// but if we ARE registered we should probably just be sending the data straight
 		// along to the server, but only if we have one!
@@ -74,25 +80,95 @@ class Client
 		// I'm not fully decided either way yet, but I am partial to #1 as it seems
 		// more in line with the spirit of the IRC specification.
 		else
-		{
-			$command = strtoupper($command);
-			$this->send("421 " . $command . " :Unknown command");
-		}
+			$this->sendNumeric(421, "%s :Unknown command", strtoupper($command));
 	}
 
 	private function isRegistered()
 	{
+		if ($this->inCAP === true) return false;
 		if ((!empty($this->user)) && ($this->authenticated === true)) return true;
 		return false;
 	}
-
-	public function send($data)
+	
+	public function sendNumeric($numeric, $format)
 	{
+		$args = func_get_args();
+		array_shift($args);
+		array_shift($args);
+		if (!empty($args))
+			$message = vsprintf($format, $args);
+		else
+			$message = $format;
+
+		$this->send(":%s %d %s %s", $this->serverName, $numeric, (!empty($this->nick)) ? $this->nick : "*", $message);
+	}
+	public function send($format)
+	{
+		$args = func_get_args();
+		array_shift($args);
+		if (!empty($args))
+			$message = vsprintf($format, $args);
+		else
+			$message = $format;
+
 		$SH = SocketHandler::getInstance();
-		$SH->send($this->sid, $data . "\n");
+		$SH->send($this->sid, "%s\n", $message);
+		echo $message."\n";
 	}
 
 	protected function _destroy()
+	{
+	}
+
+	// and now begins the endless list of command processing functions!
+	private function cmd_cap($data)
+	{
+		// first param in cap data is subcommand
+		$subcmd = strtolower(array_shift($data));
+		switch ($subcmd)
+		{
+			case 'ls':
+				// according to the spec, we need to suspend registration
+				// if the client issues this command during registration.
+				// so YEAH.
+				if (!$this->isRegistered()) $this->inCAP = true;
+
+				// anyway, respond with the capabilities we PLAN to support.
+				$this->sendCAP("LS", ":multi-prefix sasl extended-join account-notify away-notify uhnames");
+			case 'list':
+			case 'req':
+			case 'ack':
+			case 'nak':
+			case 'clear':
+			case 'end':
+				// all done!
+				$this->inCAP = false;
+				break;
+			default:
+				$this->sendNum(410, "%s :Invalid CAP command", strtoupper($subcmd));
+		}
+	}
+	private function sendCAP($subcmd, $format)
+	{
+		$args = func_get_args();
+		array_shift($args);
+		array_shift($args);
+		if (!empty($args))
+			$message = vsprintf($format, $args);
+		else
+		$message = $format;	
+		$this->send(":%s CAP %s %s %s", $this->serverName, (!empty($this->nick)) ? $this->nick : "*", $subcmd, $message);
+	}
+
+	private function cmd_nick($data)
+	{
+	}
+
+	private function cmd_user($data)
+	{
+	}
+
+	private function cmd_pass($data)
 	{
 	}
 }

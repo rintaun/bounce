@@ -15,8 +15,7 @@
 if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
 
 require_once("Client.php");
-require_once("ClientParser.php");
-require_once("IRCParser.php");
+require_once("IRCServer.php");
 
 final class Server extends Singleton
 {
@@ -45,6 +44,15 @@ final class Server extends Singleton
 		$data = implode("\n", $d);
 
 		echo $line."\n";
+		switch (SocketHandler::getType($sid))
+		{
+			case SH_CLIENT:
+				$this->clients[$sid]->parse($line);
+				break;
+			case SH_SERVER:
+				// $this->servers[$sid]->parse($line);
+				break;
+		}
 		return $data;
 	}
 

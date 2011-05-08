@@ -64,7 +64,7 @@ final class SocketHandler extends Singleton
 						$length = strlen($entry['data']);
 						$w = 0;
 						while ($w < $length)
-							$w += socket_write($this->sockets[$entry['sid']], $entry['data']);
+							$w += socket_write($this->sockets[$entry['sid']]['socket'], $entry['data']);
 						array_shift($this->sendq);
 					}
 					else break;
@@ -77,7 +77,7 @@ final class SocketHandler extends Singleton
 				foreach ($sids AS $sid)
 				{
 					// if it's a listener, then we have a connection.
-					if ($this->getType($sid) == SH_LISTENER)
+					if (self::getType($sid) == SH_LISTENER)
 					{
 						if (($client = @socket_accept($this->sockets[$sid]['socket'])) === FALSE) continue;
 						$csid = uniqid('c');
@@ -109,7 +109,7 @@ final class SocketHandler extends Singleton
 			if ($data['socket'] == $socket) return $sid;
 	}
 
-	private function getType($sid)
+	public static function getType($sid)
 	{
 		switch (substr($sid,0,1))
 		{
@@ -184,9 +184,17 @@ final class SocketHandler extends Singleton
 			$this->sockets[$sid]['callback'] = $callback;
 	}
 
-	public function send($sid, $data)
+	public function send($sid, $format)
 	{
-		$this->sendq[] = array('sid' => $sid, 'data' => $data);
+		$args = func_get_args();
+		array_shift($args);
+		array_shift($args);
+		if (!empty($args))
+			$message = vsprintf($format, $args);
+		else
+			$message = $format;
+
+		$this->sendq[] = array('sid' => $sid, 'data' => $message);
 	}
 
 	protected function _destroy()
