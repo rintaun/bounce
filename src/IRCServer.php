@@ -14,6 +14,8 @@
 
 if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
 
+require_once("IRC.php");
+
 class IRCServer
 {
 	private $sid = "";

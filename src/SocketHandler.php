@@ -31,6 +31,13 @@ final class SocketHandler extends Singleton
 	{
 	}
 
+	public function close($sid)
+	{
+		if (!is_resource($this->sockets[$sid])) return FALSE;
+		socket_close($this->sockets[$sid]['socket']);
+		unset($this->sockets[$sid]);
+	}
+
 	public function loop()
 	{
 		while (!$this->interrupt)

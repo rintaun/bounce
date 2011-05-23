@@ -14,6 +14,8 @@
 
 if (!defined('_BOUNCE_')) die('This script may not be invoked directly.');
 
+require_once("IRC.php");
+
 class Client
 {
 	private $sid = "";
@@ -28,6 +30,17 @@ class Client
 
 	private $serverName = "asgard.projectxero.net";
 
+	private $authenticated = FALSE;
+
+	private $features = array(
+		'multi-prefix' 		=> FALSE,
+		'sasl' 			=> FALSE,
+		'extended-join' 	=> FALSE,
+		'account-notify' 	=> FALSE,
+		'away-notify' 		=> FALSE,
+		'uhnames' 		=> FALSE,
+	);
+
 	public function __construct($sid)
 	{
 		$this->sid = $sid;
@@ -35,26 +48,17 @@ class Client
 
 	public function parse($data)
 	{
-		// irc is a space-delimited protocol, so first let's BLOW IT UP!
-		$data = explode(" ", $data);
-
-		// technically, it's valid irc protocol for the client to send an origin
-		// before its command beginning with a colon. in theory, a server should
-		// check to see if this is valid and use it if it is or rewrite it if it
-		// isn't. in practice, it's more practical to just throw it away. Plus, we
-		// don't use that crap anyway, because not all servers support it
-		// (i.e. they are broken).
-		if (substr($data[0],0,1) == ":") array_shift($data); // in the disposal!
-
-		// I'm in a comment-y mood tonight :)
-
-		// the next token is the command.
-		$command = strtolower(array_shift($data));
+		$data = IRC::Parse($data);
+		// we can ignore the origin.
+		// $origin = $data['origin'];
+		$command = $data['command'];
+		$params = $data['params'];
 
 		// now we need to find out if there's a method in $this for handling $command
 		// if there is, we pass off the rest of $data - the parameters - to it
 		// for processing
-		if (method_exists($this, "cmd_" . $command)) call_user_func(array($this, "cmd_" . $command), $data);
+		if (method_exists($this, "cmd_" . $command))
+			call_user_func(array($this, "cmd_" . $command), $params);
 
 		// if there ISN'T a method for handling $command...
 		// first we should check if they're registered. We intercept CAP entirely
@@ -67,8 +71,15 @@ class Client
 		// along to the server, but only if we have one!
 		else if (is_a($this->myServer, "IRCServer"))
 		{
-			// first we need to rebuild our command
-			$data = strtoupper($command) . " " . implode($data);
+			// pull the last param off if it's freeform
+			if ($data['freeform'] === TRUE) $freeform = array_pop($params);
+			
+			// then we need to rebuild our command
+			$data = strtoupper($command) . " " . implode($params);
+
+			// and if we have freeform, stick in on there.
+			if (isset($freeform)) $data .= " :" . $freeform;
+
 			// and then send it!
 			$this->myServer->send($data);
 		}
@@ -118,6 +129,9 @@ class Client
 
 	protected function _destroy()
 	{
+		$SH = SocketHandler::getInstance();
+		$SH->close($this->sid);
+		unset($this);
 	}
 
 	// and now begins the endless list of command processing functions!
@@ -134,12 +148,50 @@ class Client
 				if (!$this->isRegistered()) $this->inCAP = true;
 
 				// anyway, respond with the capabilities we PLAN to support.
-				$this->sendCAP("LS", ":multi-prefix sasl extended-join account-notify away-notify uhnames");
+				$this->sendCAP("LS", ":%s", implode(" ", array_keys($this->features)));
+				break;
 			case 'list':
 			case 'req':
-			case 'ack':
-			case 'nak':
+				if (!$this->isRegistered()) $this->inCAP = true;
+
+				if (substr($data[0],0,1) == ":") $data[0] = substr($data[0],1);
+
+				// the remaining parameters should be requested features. turn them on.
+				// we either have to accept the entire set or none of it... so if there's a feature
+				// that we don't understand, we have to reject.
+				// so start by copying the features array
+				$features = $this->features;
+
+				foreach ($data AS $feat)
+				{
+					// we support this feature, so turn it on.
+					if (isset($features[$feat])) $features[$feat] = TRUE;
+					// otherwise, signal that the client is ASKING FOR TOO MUCH. smack that "$)"%!
+					else { $features = FALSE; break; }
+				}
+				if ($features === FALSE)
+				{
+					$this->sendCAP("NAK", ":%s", implode(" ",$data));
+				}
+				else
+				{
+					$this->sendCAP("ACK", ":%s", implode(" ",$data));
+				}
+				break;
+			case 'ack': break; // we can probably safely ignore this...
+			case 'nak': break; // we only send this; we shouldn't ever receive it.
 			case 'clear':
+				$turnoff = array();
+
+				foreach ($this->features AS $key => $value)
+				{
+					if ($value == TRUE)
+					{
+						$this->features[$key] = FALSE;
+						$turnoff[] = $key;
+					}
+				}
+				$this->sendCAP("ACK", ":%s", implode(" ", $turnoff));
 			case 'end':
 				// all done!
 				$this->inCAP = false;
@@ -162,13 +214,30 @@ class Client
 
 	private function cmd_nick($data)
 	{
+		$this->nick = substr(array_shift($data),1);
 	}
 
 	private function cmd_user($data)
 	{
+		$this->username = array_shift($data);
+		array_shift($data);
+		array_shift($data);
+		$this->realname = substr(implode(" ", $data),1);
 	}
 
 	private function cmd_pass($data)
 	{
+		// the format for the param to PASS is username:network:password
+		// but there are some circumstances under which one or more will be omitted.
+		// password is always required.
+		// SP = space
+		// COLON = : (with whitespace around it removed)
+		// syntax: PASS SP [ username COLON ] [ network COLON ] password
+		
+	}
+
+	private function cmd_quit($data)
+	{
+		$this->_destroy();
 	}
 }
